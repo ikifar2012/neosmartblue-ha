@@ -14,7 +14,6 @@ from . import const
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator
-
     from bleak.backends.device import BLEDevice
     from neosmartblue.py import BlueLinkDevice
 
