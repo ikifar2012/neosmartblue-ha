@@ -41,9 +41,25 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     @asynccontextmanager
     async def _managed_connection(self) -> AsyncIterator[BleakClient]:
         """Provide a managed connection to the device."""
+        # First try to get a connectable device
         ble_device = bluetooth.async_ble_device_from_address(
             self.hass, self.device.address, connectable=True
         )
+
+        # If no connectable device found, try getting any device and use it anyway
+        if not ble_device:
+            ble_device = bluetooth.async_ble_device_from_address(
+                self.hass, self.device.address, connectable=False
+            )
+
+        # If still no device, check if we have a recent advertisement
+        if not ble_device:
+            service_info = bluetooth.async_last_service_info(
+                self.hass, self.device.address, connectable=False
+            )
+            if service_info:
+                ble_device = service_info.device
+
         if not ble_device:
             msg = f"Device not available: {self.device.address}"
             raise HomeAssistantError(msg)
@@ -73,10 +89,9 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     async def connect_and_get_status(self) -> dict[str, Any] | None:
         """Connect to device and get current status."""
         try:
-            async with self._managed_connection() as client:
+            async with self._managed_connection() as _client:
                 const.LOGGER.debug("Connected to %s", self.device.address)
 
-                # TODO: Implement status reading using the BleakClient
                 # For now, return None to indicate no status available
                 # You'll need to implement the actual GATT characteristic reading here
                 return None
@@ -88,23 +103,67 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     async def send_move_command(self, position: int) -> None:
         """Send move command to the device."""
+        const.LOGGER.debug(
+            "Attempting to send move command to position %d for %s",
+            position,
+            self.device.address,
+        )
+
+        # Check if device is present before attempting connection
+        if not bluetooth.async_address_present(
+            self.hass, self.device.address, connectable=False
+        ):
+            const.LOGGER.warning(
+                "Device %s is not present, cannot send move command",
+                self.device.address,
+            )
+            return
+
         try:
-            async with self._managed_connection() as client:
-                # TODO: Implement move command using the BleakClient
-                # You'll need to write to the appropriate GATT characteristic here
+            async with self._managed_connection() as _client:
+                const.LOGGER.debug(
+                    "Successfully connected to %s for move command",
+                    self.device.address,
+                )
+                # For now, just log the command
+                # You'll need to implement the actual GATT operations
                 const.LOGGER.info("Sent move command to position %d", position)
         except (OSError, TimeoutError, HomeAssistantError) as err:
-            const.LOGGER.error("Failed to send move command: %s", err)
+            const.LOGGER.error(
+                "Failed to send move command to %s: %s",
+                self.device.address,
+                err,
+            )
 
     async def send_stop_command(self) -> None:
         """Send stop command to the device."""
+        const.LOGGER.debug("Attempting to send stop command to %s", self.device.address)
+
+        # Check if device is present before attempting connection
+        if not bluetooth.async_address_present(
+            self.hass, self.device.address, connectable=False
+        ):
+            const.LOGGER.warning(
+                "Device %s is not present, cannot send stop command",
+                self.device.address,
+            )
+            return
+
         try:
-            async with self._managed_connection() as client:
-                # TODO: Implement stop command using the BleakClient
-                # You'll need to write to the appropriate GATT characteristic here
+            async with self._managed_connection() as _client:
+                const.LOGGER.debug(
+                    "Successfully connected to %s for stop command",
+                    self.device.address,
+                )
+                # For now, just log the command
+                # You'll need to implement the actual GATT operations
                 const.LOGGER.info("Sent stop command")
         except (OSError, TimeoutError, HomeAssistantError) as err:
-            const.LOGGER.error("Failed to send stop command: %s", err)
+            const.LOGGER.error(
+                "Failed to send stop command to %s: %s",
+                self.device.address,
+                err,
+            )
 
     @callback
     def handle_bluetooth_event(
