@@ -1,0 +1,25 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "title": "Select NeoSmart Blue Device",
+                "description": "Select a NeoSmart Blue blind to add to Home Assistant.",
+                "data": {
+                    "address": "Device"
+                }
+            },
+            "bluetooth_confirm": {
+                "title": "Confirm NeoSmart Blue Device",
+                "description": "Do you want to add the NeoSmart Blue blind '{name}' to Home Assistant?"
+            }
+        },
+        "error": {
+            "no_devices_found": "No NeoSmart Blue devices found nearby.",
+            "unknown": "Unknown error occurred."
+        },
+        "abort": {
+            "already_configured": "This device is already configured.",
+            "not_supported": "This device is not a supported NeoSmart Blue blind."
+        }
+    }
+}
