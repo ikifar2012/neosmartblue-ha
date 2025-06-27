@@ -31,6 +31,9 @@ async def async_setup_entry(
         [
             NeoSmartBlueMotorSensor(coordinator),
             NeoSmartBlueChargingSensor(coordinator),
+            NeoSmartBlueTouchControlSensor(coordinator),
+            NeoSmartBlueUpLimitSensor(coordinator),
+            NeoSmartBlueDownLimitSensor(coordinator),
         ]
     )
 
@@ -70,4 +73,58 @@ class NeoSmartBlueChargingSensor(NeoSmartBlueEntity, BinarySensorEntity):
         """Return true if the device is charging."""
         if self.coordinator.data:
             return self.coordinator.data.get("charging", False)
+        return None
+
+
+class NeoSmartBlueTouchControlSensor(NeoSmartBlueEntity, BinarySensorEntity):
+    """Touch control binary sensor for NeoSmart Blue blind."""
+
+    def __init__(self, coordinator: NeoSmartBlueCoordinator) -> None:
+        """Initialize the binary sensor."""
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{coordinator.device.address}_touch_control"
+        self._attr_name = "Touch Control Active"
+        self._attr_entity_registry_enabled_default = False
+
+    @property
+    def is_on(self) -> bool | None:
+        """Return true if touch control is active."""
+        if self.coordinator.data:
+            return self.coordinator.data.get("touch_control", False)
+        return None
+
+
+class NeoSmartBlueUpLimitSensor(NeoSmartBlueEntity, BinarySensorEntity):
+    """Up limit set binary sensor for NeoSmart Blue blind."""
+
+    def __init__(self, coordinator: NeoSmartBlueCoordinator) -> None:
+        """Initialize the binary sensor."""
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{coordinator.device.address}_up_limit_set"
+        self._attr_name = "Up Limit Set"
+        self._attr_entity_registry_enabled_default = False
+
+    @property
+    def is_on(self) -> bool | None:
+        """Return true if up limit is set."""
+        if self.coordinator.data:
+            return self.coordinator.data.get("up_limit_set", False)
+        return None
+
+
+class NeoSmartBlueDownLimitSensor(NeoSmartBlueEntity, BinarySensorEntity):
+    """Down limit set binary sensor for NeoSmart Blue blind."""
+
+    def __init__(self, coordinator: NeoSmartBlueCoordinator) -> None:
+        """Initialize the binary sensor."""
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{coordinator.device.address}_down_limit_set"
+        self._attr_name = "Down Limit Set"
+        self._attr_entity_registry_enabled_default = False
+
+    @property
+    def is_on(self) -> bool | None:
+        """Return true if down limit is set."""
+        if self.coordinator.data:
+            return self.coordinator.data.get("down_limit_set", False)
         return None

@@ -75,15 +75,31 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     async def _async_update_data(self) -> dict[str, Any]:
         """Fetch data from the device."""
         # For NeoSmart Blue, we primarily get data from advertisements
-        # But we can also connect and request status if needed
+        # Try to get the latest advertisement data first
+        latest_data = self.get_latest_advertisement_data()
+        if latest_data:
+            const.LOGGER.debug(
+                "Using latest advertisement data for %s: %s",
+                self.device.address,
+                latest_data,
+            )
+            return latest_data
+
+        # Fall back to existing data or default values
         return self.data or {
             "battery_level": 0,
             "current_position": 50,
             "target_position": 50,
+            "limit_range_size": 0,
             "rssi": self.device.rssi or -60,
             "motor_running": False,
             "motor_direction_down": False,
+            "up_limit_set": False,
+            "down_limit_set": False,
+            "touch_control": False,
             "charging": False,
+            "channel_setting_mode": False,
+            "reverse_rotation": False,
         }
 
     def _create_bluelink_device(self, client: BleakClient) -> Any:
@@ -92,7 +108,7 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         bluelink_device = BlueLinkDevice(self.device.address)
         # Inject our managed client into the device
-        object.__setattr__(bluelink_device, "_client", client)
+        object.__setattr__(bluelink_device, "client", client)
         return bluelink_device
 
     async def connect_and_get_status(self) -> dict[str, Any] | None:
@@ -200,13 +216,27 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             # Parse manufacturer data for status information
             status_data = self._parse_advertisement_data(service_info)
             if status_data:
+                const.LOGGER.debug(
+                    "Received advertisement data from %s: %s",
+                    self.device.address,
+                    status_data,
+                )
                 self.async_set_updated_data(status_data)
+            else:
+                const.LOGGER.debug(
+                    "Advertisement from %s without valid status data",
+                    self.device.address,
+                )
 
     def _parse_advertisement_data(
         self, service_info: bluetooth.BluetoothServiceInfoBleak
     ) -> dict[str, Any] | None:
         """Parse advertisement data for status information."""
         if not service_info.manufacturer_data:
+            const.LOGGER.debug(
+                "No manufacturer data in advertisement from %s",
+                service_info.device.address,
+            )
             return None
 
         try:
@@ -219,8 +249,14 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 ]
                 status_payload = bytearray(manufacturer_data)
 
+                const.LOGGER.debug(
+                    "Raw manufacturer data from %s: %s",
+                    service_info.device.address,
+                    status_payload.hex().upper(),
+                )
+
                 if len(status_payload) >= const.STATUS_PAYLOAD_LENGTH:
-                    # Parse the status data using your library
+                    # Parse the status data using the library
                     parsed_status = parse_status_data(
                         status_payload[: const.STATUS_PAYLOAD_LENGTH]
                     )
@@ -228,13 +264,66 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     # Add RSSI information
                     parsed_status["rssi"] = service_info.device.rssi or -60
 
+                    const.LOGGER.debug(
+                        "Parsed status data from %s: %s",
+                        service_info.device.address,
+                        parsed_status,
+                    )
                     return parsed_status
 
+                const.LOGGER.debug(
+                    "Status payload too short from %s: %d bytes (expected %d)",
+                    service_info.device.address,
+                    len(status_payload),
+                    const.STATUS_PAYLOAD_LENGTH,
+                )
+
+            const.LOGGER.debug(
+                "No NeoSmart manufacturer data from %s (found IDs: %s)",
+                service_info.device.address,
+                list(service_info.manufacturer_data.keys()),
+            )
+
         except (ValueError, KeyError, IndexError) as err:
-            const.LOGGER.debug("Failed to parse advertisement data: %s", err)
+            const.LOGGER.warning(
+                "Failed to parse advertisement data from %s: %s",
+                service_info.device.address,
+                err,
+            )
 
         return None
 
     async def async_shutdown(self) -> None:
         """Shutdown the coordinator."""
         # Connections are now managed per-operation, so nothing to do on shutdown.
+
+    def is_device_advertising(self) -> bool:
+        """Check if the device is currently advertising."""
+        return bluetooth.async_address_present(
+            self.hass, self.device.address, connectable=False
+        )
+
+    def get_latest_advertisement_data(self) -> dict[str, Any] | None:
+        """Get the latest advertisement data without connection."""
+        service_info = bluetooth.async_last_service_info(
+            self.hass, self.device.address, connectable=False
+        )
+        if service_info:
+            return self._parse_advertisement_data(service_info)
+        return None
+
+    async def refresh_advertisement_data(self) -> None:
+        """Manually refresh data from the latest advertisement."""
+        latest_data = self.get_latest_advertisement_data()
+        if latest_data:
+            const.LOGGER.debug(
+                "Refreshed advertisement data for %s: %s",
+                self.device.address,
+                latest_data,
+            )
+            self.async_set_updated_data(latest_data)
+        else:
+            const.LOGGER.debug(
+                "No advertisement data available for %s",
+                self.device.address,
+            )

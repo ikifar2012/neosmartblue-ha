@@ -1,4 +1,4 @@
-"""Config flow for NeoSmart Blue Blinds."""
+"""Config flow for Neosmart Blinds Blue."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ from .const import DOMAIN, NEOSMART_MANUFACTURER_ID
 
 
 class NeoSmartBlueConfigFlow(ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for NeoSmart Blue Blinds."""
+    """Handle a config flow for Neosmart Blinds Blue."""
 
     VERSION = 1
 
@@ -33,7 +33,7 @@ class NeoSmartBlueConfigFlow(ConfigFlow, domain=DOMAIN):
         await self.async_set_unique_id(discovery_info.address)
         self._abort_if_unique_id_configured()
         self._discovery_info = discovery_info
-        name = discovery_info.name or "NeoSmart Blue Blind"
+        name = discovery_info.name or "Neosmart Blind Blue"
         self._title_placeholders = {"name": name}
         return await self.async_step_bluetooth_confirm()
 
@@ -73,7 +73,7 @@ class NeoSmartBlueConfigFlow(ConfigFlow, domain=DOMAIN):
                 continue
 
             if self._is_neosmart_device(discovery_info):
-                name = discovery_info.name or "NeoSmart Blue Blind"
+                name = discovery_info.name or "Neosmart Blind Blue"
                 self._discovered_devices[address] = f"{name} ({address})"
 
         if not self._discovered_devices:
