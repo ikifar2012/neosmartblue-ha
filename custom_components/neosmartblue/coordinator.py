@@ -2,15 +2,19 @@
 
 from __future__ import annotations
 
+import asyncio
+from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Any
 
 from homeassistant.components import bluetooth
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
-from .const import DOMAIN, LOGGER, NEOSMART_MANUFACTURER_ID, STATUS_PAYLOAD_LENGTH
+from . import const
 
 if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
+
     from bleak.backends.device import BLEDevice
     from neosmartblue.py import BlueLinkDevice
 
@@ -26,18 +30,23 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         """Initialize the coordinator."""
         super().__init__(
             hass,
-            LOGGER,
-            name=f"{DOMAIN}_{device.address}",
+            const.LOGGER,
+            name=f"{const.DOMAIN}_{device.address}",
             update_interval=None,  # We'll use passive scanning
         )
         self.device = device
         self._bluelink_device: BlueLinkDevice | None = None
-        self._connected = False
+        self._connection_lock = asyncio.Lock()
 
-    @property
-    def connected(self) -> bool:
-        """Return if we are connected to the device."""
-        return self._connected
+    @asynccontextmanager
+    async def _managed_connection(self) -> AsyncIterator[None]:
+        """Provide a managed connection to the device."""
+        async with self._connection_lock:
+            try:
+                await self.bluelink_device.connect()
+                yield
+            finally:
+                await self.bluelink_device.disconnect()
 
     @property
     def bluelink_device(self) -> BlueLinkDevice:
@@ -65,59 +74,38 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     async def connect_and_get_status(self) -> dict[str, Any] | None:
         """Connect to device and get current status."""
         try:
-            await self.bluelink_device.connect()
-            self._connected = True
-            LOGGER.debug("Connected to %s", self.device.address)
+            async with self._managed_connection():
+                const.LOGGER.debug("Connected to %s", self.device.address)
 
-            # Request status update
-            await self.bluelink_device.request_status_update()
-            status_data = await self.bluelink_device.receive_data(timeout=5.0)
+                # Request status update
+                await self.bluelink_device.request_status_update()
+                status_data = await self.bluelink_device.receive_data(timeout=5.0)
 
-            if status_data and isinstance(status_data, dict):
-                return status_data
+                if status_data and isinstance(status_data, dict):
+                    return status_data
 
         except (OSError, TimeoutError) as err:
-            LOGGER.error("Failed to connect to %s: %s", self.device.address, err)
-            self._connected = False
-        finally:
-            await self._disconnect()
+            const.LOGGER.error("Failed to connect to %s: %s", self.device.address, err)
 
         return None
 
     async def send_move_command(self, position: int) -> None:
         """Send move command to the device."""
         try:
-            await self.bluelink_device.connect()
-            await self.bluelink_device.move_to_position(position)
-            LOGGER.info("Sent move command to position %d", position)
+            async with self._managed_connection():
+                await self.bluelink_device.move_to_position(position)
+                const.LOGGER.info("Sent move command to position %d", position)
         except (OSError, TimeoutError) as err:
-            LOGGER.error("Failed to send move command: %s", err)
-        finally:
-            await self._disconnect()
+            const.LOGGER.error("Failed to send move command: %s", err)
 
     async def send_stop_command(self) -> None:
         """Send stop command to the device."""
         try:
-            await self.bluelink_device.connect()
-            await self.bluelink_device.stop()
-            LOGGER.info("Sent stop command")
+            async with self._managed_connection():
+                await self.bluelink_device.stop()
+                const.LOGGER.info("Sent stop command")
         except (OSError, TimeoutError) as err:
-            LOGGER.error("Failed to send stop command: %s", err)
-        finally:
-            await self._disconnect()
-
-    async def _disconnect(self) -> None:
-        """Disconnect from the BLE device."""
-        if self._bluelink_device and self._connected:
-            try:
-                await self._bluelink_device.disconnect()
-                LOGGER.debug("Disconnected from %s", self.device.address)
-            except (OSError, TimeoutError) as err:
-                LOGGER.error(
-                    "Error disconnecting from %s: %s", self.device.address, err
-                )
-            finally:
-                self._connected = False
+            const.LOGGER.error("Failed to send stop command: %s", err)
 
     @callback
     def handle_bluetooth_event(
@@ -144,18 +132,18 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         try:
             # NeoSmart Blue devices use manufacturer ID 2407
-            if NEOSMART_MANUFACTURER_ID in service_info.manufacturer_data:
+            if const.NEOSMART_MANUFACTURER_ID in service_info.manufacturer_data:
                 from neosmartblue.py import parse_status_data
 
                 manufacturer_data = service_info.manufacturer_data[
-                    NEOSMART_MANUFACTURER_ID
+                    const.NEOSMART_MANUFACTURER_ID
                 ]
                 status_payload = bytearray(manufacturer_data)
 
-                if len(status_payload) >= STATUS_PAYLOAD_LENGTH:
+                if len(status_payload) >= const.STATUS_PAYLOAD_LENGTH:
                     # Parse the status data using your library
                     parsed_status = parse_status_data(
-                        status_payload[:STATUS_PAYLOAD_LENGTH]
+                        status_payload[: const.STATUS_PAYLOAD_LENGTH]
                     )
 
                     # Add RSSI information
@@ -164,10 +152,10 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     return parsed_status
 
         except (ValueError, KeyError, IndexError) as err:
-            LOGGER.debug("Failed to parse advertisement data: %s", err)
+            const.LOGGER.debug("Failed to parse advertisement data: %s", err)
 
         return None
 
     async def async_shutdown(self) -> None:
         """Shutdown the coordinator."""
-        await self._disconnect()
+        # Connections are now managed per-operation, so nothing to do on shutdown.
