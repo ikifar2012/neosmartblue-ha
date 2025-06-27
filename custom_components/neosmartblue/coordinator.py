@@ -6,16 +6,18 @@ import asyncio
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Any
 
+from bleak import BleakClient
 from homeassistant.components import bluetooth
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from . import const
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator
+
     from bleak.backends.device import BLEDevice
-    from neosmartblue.py import BlueLinkDevice
 
 
 class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
@@ -34,27 +36,25 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             update_interval=None,  # We'll use passive scanning
         )
         self.device = device
-        self._bluelink_device: BlueLinkDevice | None = None
         self._connection_lock = asyncio.Lock()
 
     @asynccontextmanager
-    async def _managed_connection(self) -> AsyncIterator[None]:
+    async def _managed_connection(self) -> AsyncIterator[BleakClient]:
         """Provide a managed connection to the device."""
+        ble_device = bluetooth.async_ble_device_from_address(
+            self.hass, self.device.address, connectable=True
+        )
+        if not ble_device:
+            msg = f"Device not available: {self.device.address}"
+            raise HomeAssistantError(msg)
+
         async with self._connection_lock:
+            client = BleakClient(ble_device)
             try:
-                await self.bluelink_device.connect()
-                yield
+                await client.connect()
+                yield client
             finally:
-                await self.bluelink_device.disconnect()
-
-    @property
-    def bluelink_device(self) -> BlueLinkDevice:
-        """Get the BlueLinkDevice instance."""
-        if self._bluelink_device is None:
-            from neosmartblue.py import BlueLinkDevice
-
-            self._bluelink_device = BlueLinkDevice(self.device.address)
-        return self._bluelink_device
+                await client.disconnect()
 
     async def _async_update_data(self) -> dict[str, Any]:
         """Fetch data from the device."""
@@ -73,17 +73,15 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     async def connect_and_get_status(self) -> dict[str, Any] | None:
         """Connect to device and get current status."""
         try:
-            async with self._managed_connection():
+            async with self._managed_connection() as client:
                 const.LOGGER.debug("Connected to %s", self.device.address)
 
-                # Request status update
-                await self.bluelink_device.request_status_update()
-                status_data = await self.bluelink_device.receive_data(timeout=5.0)
+                # TODO: Implement status reading using the BleakClient
+                # For now, return None to indicate no status available
+                # You'll need to implement the actual GATT characteristic reading here
+                return None
 
-                if status_data and isinstance(status_data, dict):
-                    return status_data
-
-        except (OSError, TimeoutError) as err:
+        except (OSError, TimeoutError, HomeAssistantError) as err:
             const.LOGGER.error("Failed to connect to %s: %s", self.device.address, err)
 
         return None
@@ -91,19 +89,21 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     async def send_move_command(self, position: int) -> None:
         """Send move command to the device."""
         try:
-            async with self._managed_connection():
-                await self.bluelink_device.move_to_position(position)
+            async with self._managed_connection() as client:
+                # TODO: Implement move command using the BleakClient
+                # You'll need to write to the appropriate GATT characteristic here
                 const.LOGGER.info("Sent move command to position %d", position)
-        except (OSError, TimeoutError) as err:
+        except (OSError, TimeoutError, HomeAssistantError) as err:
             const.LOGGER.error("Failed to send move command: %s", err)
 
     async def send_stop_command(self) -> None:
         """Send stop command to the device."""
         try:
-            async with self._managed_connection():
-                await self.bluelink_device.stop()
+            async with self._managed_connection() as client:
+                # TODO: Implement stop command using the BleakClient
+                # You'll need to write to the appropriate GATT characteristic here
                 const.LOGGER.info("Sent stop command")
-        except (OSError, TimeoutError) as err:
+        except (OSError, TimeoutError, HomeAssistantError) as err:
             const.LOGGER.error("Failed to send stop command: %s", err)
 
     @callback
