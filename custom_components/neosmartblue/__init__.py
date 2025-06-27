@@ -34,7 +34,7 @@ async def async_setup_entry(
 
     # Get the Bluetooth device
     ble_device = bluetooth.async_ble_device_from_address(
-        hass, address, connectable=True
+        hass, address, connectable=False
     )
     if not ble_device:
         LOGGER.error("Could not find Bluetooth device with address %s", address)
