@@ -73,20 +73,18 @@ class NeoSmartBlueCover(NeoSmartBlueEntity, CoverEntity):
     def is_opening(self) -> bool:
         """Return if the cover is opening or not."""
         if self.coordinator.data:
-            return (
-                self.coordinator.data.get("motor_running", False)
-                and self.coordinator.data.get("motor_direction_down", False)
-            )
+            return self.coordinator.data.get(
+                "motor_running", False
+            ) and self.coordinator.data.get("motor_direction_down", False)
         return False
 
     @property
     def is_closing(self) -> bool:
         """Return if the cover is closing or not."""
         if self.coordinator.data:
-            return (
-                self.coordinator.data.get("motor_running", False)
-                and not self.coordinator.data.get("motor_direction_down", False)
-            )
+            return self.coordinator.data.get(
+                "motor_running", False
+            ) and not self.coordinator.data.get("motor_direction_down", False)
         return False
 
     async def async_open_cover(self, **_kwargs: Any) -> None:
