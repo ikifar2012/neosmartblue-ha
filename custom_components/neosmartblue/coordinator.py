@@ -86,15 +86,30 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "charging": False,
         }
 
+    def _create_bluelink_device(self, client: BleakClient) -> Any:
+        """Create a BlueLinkDevice with injected client."""
+        from neosmartblue.py import BlueLinkDevice
+
+        bluelink_device = BlueLinkDevice(self.device.address)
+        # Inject our managed client into the device
+        object.__setattr__(bluelink_device, "_client", client)
+        return bluelink_device
+
     async def connect_and_get_status(self) -> dict[str, Any] | None:
         """Connect to device and get current status."""
         try:
-            async with self._managed_connection() as _client:
+            async with self._managed_connection() as client:
                 const.LOGGER.debug("Connected to %s", self.device.address)
 
-                # For now, return None to indicate no status available
-                # You'll need to implement the actual GATT characteristic reading here
-                return None
+                # Use the neosmartblue library to get status
+                bluelink_device = self._create_bluelink_device(client)
+
+                # Request status update
+                await bluelink_device.request_status_update()
+                status_data = await bluelink_device.receive_data(timeout=5.0)
+
+                if status_data and isinstance(status_data, dict):
+                    return status_data
 
         except (OSError, TimeoutError, HomeAssistantError) as err:
             const.LOGGER.error("Failed to connect to %s: %s", self.device.address, err)
@@ -120,13 +135,16 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             return
 
         try:
-            async with self._managed_connection() as _client:
+            async with self._managed_connection() as client:
                 const.LOGGER.debug(
                     "Successfully connected to %s for move command",
                     self.device.address,
                 )
-                # For now, just log the command
-                # You'll need to implement the actual GATT operations
+
+                # Use the neosmartblue library to send move command
+                bluelink_device = self._create_bluelink_device(client)
+
+                await bluelink_device.move_to_position(position)
                 const.LOGGER.info("Sent move command to position %d", position)
         except (OSError, TimeoutError, HomeAssistantError) as err:
             const.LOGGER.error(
@@ -150,13 +168,16 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             return
 
         try:
-            async with self._managed_connection() as _client:
+            async with self._managed_connection() as client:
                 const.LOGGER.debug(
                     "Successfully connected to %s for stop command",
                     self.device.address,
                 )
-                # For now, just log the command
-                # You'll need to implement the actual GATT operations
+
+                # Use the neosmartblue library to send stop command
+                bluelink_device = self._create_bluelink_device(client)
+
+                await bluelink_device.stop()
                 const.LOGGER.info("Sent stop command")
         except (OSError, TimeoutError, HomeAssistantError) as err:
             const.LOGGER.error(
