@@ -10,7 +10,7 @@
             },
             "bluetooth_confirm": {
                 "title": "Confirm NeoSmart Blue Device",
-                "description": "Do you want to add the NeoSmart Blue blind '{name}' to Home Assistant?"
+                "description": "Do you want to add the NeoSmart Blue blind {name} to Home Assistant?"
             }
         },
         "error": {
