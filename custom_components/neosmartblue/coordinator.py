@@ -45,6 +45,33 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.device = device
         self._connection_lock = asyncio.Lock()
 
+        const.LOGGER.info(
+            "Initialized NeoSmartBlueCoordinator for device %s",
+            device.address,
+        )
+
+        # Check if we have any recent advertisement data on startup
+        service_info = bluetooth.async_last_service_info(
+            hass, device.address, connectable=False
+        )
+        if service_info:
+            const.LOGGER.info(
+                "Found recent advertisement data for %s on startup",
+                device.address,
+            )
+            # Try to parse any existing data
+            startup_data = self._parse_advertisement_data(service_info)
+            if startup_data:
+                const.LOGGER.info(
+                    "Parsed startup advertisement data: %s",
+                    startup_data,
+                )
+        else:
+            const.LOGGER.info(
+                "No recent advertisement data found for %s on startup",
+                device.address,
+            )
+
     @asynccontextmanager
     async def _managed_connection(self) -> AsyncIterator[BleakClient]:
         """Provide a managed connection to the device."""
@@ -238,6 +265,13 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         change: bluetooth.BluetoothChange,
     ) -> None:
         """Handle bluetooth events."""
+        const.LOGGER.debug(
+            "Bluetooth event received for %s: change=%s, name=%s",
+            service_info.device.address,
+            change,
+            service_info.name,
+        )
+
         if change == bluetooth.BluetoothChange.ADVERTISEMENT:
             # Update device data from advertisement
             self.device = service_info.device
@@ -245,7 +279,7 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             # Parse manufacturer data for status information
             status_data = self._parse_advertisement_data(service_info)
             if status_data:
-                const.LOGGER.debug(
+                const.LOGGER.info(
                     "Received advertisement data from %s: %s",
                     self.device.address,
                     status_data,
@@ -256,11 +290,22 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     "Advertisement from %s without valid status data",
                     self.device.address,
                 )
+        else:
+            const.LOGGER.debug(
+                "Ignoring non-advertisement bluetooth event: %s",
+                change,
+            )
 
     def _parse_advertisement_data(
         self, service_info: bluetooth.BluetoothServiceInfoBleak
     ) -> dict[str, Any] | None:
         """Parse advertisement data for status information."""
+        const.LOGGER.debug(
+            "Parsing advertisement from %s: manufacturer_data=%s",
+            service_info.device.address,
+            service_info.manufacturer_data,
+        )
+
         if not service_info.manufacturer_data:
             const.LOGGER.debug(
                 "No manufacturer data in advertisement from %s",
@@ -279,9 +324,10 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 status_payload = bytearray(manufacturer_data)
 
                 const.LOGGER.debug(
-                    "Raw manufacturer data from %s: %s",
+                    "Raw manufacturer data from %s: %s (length: %d)",
                     service_info.device.address,
                     status_payload.hex().upper(),
+                    len(status_payload),
                 )
 
                 if len(status_payload) >= const.STATUS_PAYLOAD_LENGTH:
@@ -293,28 +339,28 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     # Add RSSI information
                     parsed_status["rssi"] = service_info.device.rssi or -60
 
-                    const.LOGGER.debug(
-                        "Parsed status data from %s: %s",
+                    const.LOGGER.info(
+                        "Successfully parsed status data from %s: %s",
                         service_info.device.address,
                         parsed_status,
                     )
                     return parsed_status
 
-                const.LOGGER.debug(
+                const.LOGGER.warning(
                     "Status payload too short from %s: %d bytes (expected %d)",
                     service_info.device.address,
                     len(status_payload),
                     const.STATUS_PAYLOAD_LENGTH,
                 )
+            else:
+                const.LOGGER.debug(
+                    "No NeoSmart manufacturer data from %s (found IDs: %s)",
+                    service_info.device.address,
+                    list(service_info.manufacturer_data.keys()),
+                )
 
-            const.LOGGER.debug(
-                "No NeoSmart manufacturer data from %s (found IDs: %s)",
-                service_info.device.address,
-                list(service_info.manufacturer_data.keys()),
-            )
-
-        except (ValueError, KeyError, IndexError) as err:
-            const.LOGGER.warning(
+        except (ValueError, KeyError, IndexError, ImportError, AttributeError) as err:
+            const.LOGGER.error(
                 "Failed to parse advertisement data from %s: %s",
                 service_info.device.address,
                 err,

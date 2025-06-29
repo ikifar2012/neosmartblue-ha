@@ -48,13 +48,21 @@ async def async_setup_entry(
     hass.data[DOMAIN][entry.entry_id] = coordinator
 
     # Set up Bluetooth listener for passive updates
-    entry.async_on_unload(
-        bluetooth.async_register_callback(
-            hass,
-            coordinator.handle_bluetooth_event,
-            {"address": address},
-            bluetooth.BluetoothScanningMode.PASSIVE,
-        )
+    LOGGER.info(
+        "Registering Bluetooth callback for device %s",
+        address,
+    )
+    callback_unregister = bluetooth.async_register_callback(
+        hass,
+        coordinator.handle_bluetooth_event,
+        {"address": address},
+        bluetooth.BluetoothScanningMode.ACTIVE,
+    )
+    entry.async_on_unload(callback_unregister)
+
+    LOGGER.info(
+        "Successfully registered Bluetooth callback for device %s",
+        address,
     )
 
     # Forward entry setup to platforms
