@@ -1,6 +1,6 @@
-# NeoSmart Blue Home Assistant Integration
+# Neo Smart Blinds Blue Home Assistant Integration
 
-A Home Assistant custom component for controlling NeoSmart Blue Bluetooth blinds.
+A Home Assistant custom component for controlling Neo Smart Bluetooth blinds.
 
 ## 🤖 AI-Generated Integration
 
@@ -32,10 +32,10 @@ This integration is functional but under active development:
 ### HACS (Recommended)
 
 1. Add this repository to HACS as a custom repository
-2. Install "NeoSmart Blue" from HACS
+2. Install "Neo Smart Blinds Blue" from HACS
 3. Restart Home Assistant
 4. Go to Settings → Devices & Services → Add Integration
-5. Search for "NeoSmart Blue" and follow the setup
+5. Search for "Neo Smart Blinds Blue" and follow the setup
 
 ### Manual Installation
 
@@ -49,11 +49,11 @@ The integration uses Home Assistant's UI-based configuration flow:
 
 1. Navigate to **Settings** → **Devices & Services**
 2. Click **Add Integration**
-3. Search for **"NeoSmart Blue"**
+3. Search for **"Neo Smart Blinds Blue"**
 
 ## Device Requirements
 
-- NeoSmart Blue Bluetooth blinds
+- Neo Smart Blinds Blue Bluetooth blinds
 - Home Assistant with Bluetooth support
 - Device must be in pairing/discoverable mode during setup
 
