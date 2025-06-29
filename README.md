@@ -50,8 +50,6 @@ The integration uses Home Assistant's UI-based configuration flow:
 1. Navigate to **Settings** → **Devices & Services**
 2. Click **Add Integration**
 3. Search for **"NeoSmart Blue"**
-4. Select your device from the discovered Bluetooth devices
-5. Complete the setup process
 
 ## Device Requirements
 
