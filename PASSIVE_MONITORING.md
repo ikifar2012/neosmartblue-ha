@@ -108,7 +108,7 @@ The integration creates the following entities:
 
 This integration leverages the `neosmartblue.py` library which provides:
 - Advertisement parsing functions
-- Device scanning capabilities  
+- Device scanning capabilities
 - Command generation for control operations
 - Proper handling of NeoSmart protocol specifics
 

@@ -25,7 +25,7 @@ async def test_passive_monitoring():
         print(f"✗ Failed to parse status data: {e}")
         return
 
-    print("\n" + "="*60 + "\n")
+    print("\n" + "=" * 60 + "\n")
 
     # Test 2: Scan for actual devices (if any are nearby)
     print("Test 2: Scanning for NeoSmart Blue devices")
@@ -36,9 +36,9 @@ async def test_passive_monitoring():
             print(f"✓ Found {len(devices)} device(s):")
             for device in devices:
                 print(f"\n  Device: {device['name']} ({device['address']})")
-                if device['status']:
+                if device["status"]:
                     print("  Status from advertisement:")
-                    for key, value in device['status'].items():
+                    for key, value in device["status"].items():
                         print(f"    {key}: {value}")
                 else:
                     print("  No status data in advertisement")
@@ -48,7 +48,7 @@ async def test_passive_monitoring():
         print(f"✗ Scan failed: {e}")
         return
 
-    print("\n" + "="*60 + "\n")
+    print("\n" + "=" * 60 + "\n")
     print("✓ All tests completed successfully!")
     print("\nThis demonstrates that the NeoSmart Blue integration can:")
     print("- Parse status data from BLE advertisements")

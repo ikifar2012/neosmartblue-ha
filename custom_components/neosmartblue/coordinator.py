@@ -14,6 +14,9 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from . import const
 
+# Polling interval in seconds
+POLL_INTERVAL = 300
+
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator
 
@@ -65,12 +68,43 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             raise HomeAssistantError(msg)
 
         async with self._connection_lock:
+            # Get a scanner to ensure we have the best connection strategy
+            scanner = bluetooth.async_get_scanner(self.hass)
+            if not scanner:
+                msg = "No Bluetooth scanner available"
+                raise HomeAssistantError(msg)
+
             client = BleakClient(ble_device)
             try:
-                await client.connect()
+                # Use a longer timeout for connection attempts as recommended
+                # for devices that might need service resolution
+                await client.connect(timeout=15.0)
+                const.LOGGER.debug(
+                    "Successfully connected to %s via BleakClient",
+                    self.device.address,
+                )
                 yield client
+            except Exception as err:
+                const.LOGGER.error(
+                    "Failed to connect to %s: %s",
+                    self.device.address,
+                    err,
+                )
+                raise
             finally:
-                await client.disconnect()
+                try:
+                    if client.is_connected:
+                        await client.disconnect()
+                        const.LOGGER.debug(
+                            "Disconnected from %s",
+                            self.device.address,
+                        )
+                except (OSError, TimeoutError, HomeAssistantError, Exception) as err:
+                    const.LOGGER.warning(
+                        "Error during disconnect from %s: %s",
+                        self.device.address,
+                        err,
+                    )
 
     async def _async_update_data(self) -> dict[str, Any]:
         """Fetch data from the device."""
@@ -140,12 +174,23 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             self.device.address,
         )
 
-        # Check if device is present before attempting connection
+        # Check if device is present and connectable before attempting connection
         if not bluetooth.async_address_present(
-            self.hass, self.device.address, connectable=False
+            self.hass, self.device.address, connectable=True
         ):
             const.LOGGER.warning(
-                "Device %s is not present, cannot send move command",
+                "Device %s is not present or not connectable, cannot send move command",
+                self.device.address,
+            )
+            return
+
+        # Check if we have a connectable device available
+        ble_device = bluetooth.async_ble_device_from_address(
+            self.hass, self.device.address, connectable=True
+        )
+        if not ble_device:
+            const.LOGGER.warning(
+                "No connectable device found for %s, cannot send move command",
                 self.device.address,
             )
             return
@@ -162,8 +207,8 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
                 await bluelink_device.move_to_position(position)
                 const.LOGGER.info("Sent move command to position %d", position)
-        except (OSError, TimeoutError, HomeAssistantError) as err:
-            const.LOGGER.error(
+        except (OSError, TimeoutError, HomeAssistantError, Exception) as err:
+            const.LOGGER.exception(
                 "Failed to send move command to %s: %s",
                 self.device.address,
                 err,
@@ -173,12 +218,23 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         """Send stop command to the device."""
         const.LOGGER.debug("Attempting to send stop command to %s", self.device.address)
 
-        # Check if device is present before attempting connection
+        # Check if device is present and connectable before attempting connection
         if not bluetooth.async_address_present(
-            self.hass, self.device.address, connectable=False
+            self.hass, self.device.address, connectable=True
         ):
             const.LOGGER.warning(
-                "Device %s is not present, cannot send stop command",
+                "Device %s is not present or not connectable, cannot send stop command",
+                self.device.address,
+            )
+            return
+
+        # Check if we have a connectable device available
+        ble_device = bluetooth.async_ble_device_from_address(
+            self.hass, self.device.address, connectable=True
+        )
+        if not ble_device:
+            const.LOGGER.warning(
+                "No connectable device found for %s, cannot send stop command",
                 self.device.address,
             )
             return
@@ -195,8 +251,8 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
                 await bluelink_device.stop()
                 const.LOGGER.info("Sent stop command")
-        except (OSError, TimeoutError, HomeAssistantError) as err:
-            const.LOGGER.error(
+        except (OSError, TimeoutError, HomeAssistantError, Exception) as err:
+            const.LOGGER.exception(
                 "Failed to send stop command to %s: %s",
                 self.device.address,
                 err,
@@ -327,3 +383,11 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 "No advertisement data available for %s",
                 self.device.address,
             )
+
+    def is_device_connectable(self) -> bool:
+        """Check if the device is currently connectable."""
+        return bool(
+            bluetooth.async_ble_device_from_address(
+                self.hass, self.device.address, connectable=True
+            )
+        )

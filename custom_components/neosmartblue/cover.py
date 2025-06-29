@@ -87,6 +87,15 @@ class NeoSmartBlueCover(NeoSmartBlueEntity, CoverEntity):
             ) and not self.coordinator.data.get("motor_direction_down", False)
         return False
 
+    @property
+    def available(self) -> bool:
+        """Return True if entity is available."""
+        # Device is available if we can see advertisements or it's connectable
+        return (
+            self.coordinator.is_device_advertising()
+            or self.coordinator.is_device_connectable()
+        )
+
     async def async_open_cover(self, **_kwargs: Any) -> None:
         """Open the cover."""
         await self.coordinator.send_move_command(0)
