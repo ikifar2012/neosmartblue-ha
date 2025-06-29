@@ -8,7 +8,7 @@ This Home Assistant integration was **generated using AI assistance** and is cur
 
 ### What's Human-Written vs AI-Generated
 
-- **`neosmartblue.py`** - The core Bluetooth communication library is **entirely human-written** by Matheson Steplock the project maintainer
+- **`neosmartblue.py`** - The core Bluetooth communication library is written by [Matheson Steplock](https://github.com/ikifar2012) the project maintainer
 - **Home Assistant Integration Code** - The custom component files (`__init__.py`, `coordinator.py`, `config_flow.py`, etc.) were **AI-generated** and are being manually reviewed and improved
 
 ## 🚧 Current Status
