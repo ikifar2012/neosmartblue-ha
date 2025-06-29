@@ -14,9 +14,6 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from . import const
 
-# Polling interval in seconds
-POLL_INTERVAL = 300
-
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator
 
@@ -24,7 +21,14 @@ if TYPE_CHECKING:
 
 
 class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
-    """Class to manage fetching data from NeoSmart Blue blinds via BLE."""
+    """
+    Class to manage fetching data from NeoSmart Blue blinds via BLE.
+
+    This coordinator operates in a purely passive mode:
+    - No active polling or data fetching
+    - Updates only come from BLE advertisements via handle_bluetooth_event
+    - Connections are only made for sending commands, never for status
+    """
 
     def __init__(
         self,
@@ -108,18 +112,8 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     async def _async_update_data(self) -> dict[str, Any]:
         """Fetch data from the device."""
-        # For NeoSmart Blue, we primarily get data from advertisements
-        # Try to get the latest advertisement data first
-        latest_data = self.get_latest_advertisement_data()
-        if latest_data:
-            const.LOGGER.debug(
-                "Using latest advertisement data for %s: %s",
-                self.device.address,
-                latest_data,
-            )
-            return latest_data
-
-        # Fall back to existing data or default values
+        # For NeoSmart Blue, we rely entirely on advertisements for status data
+        # Return existing data or default values - no active polling
         return self.data or {
             "battery_level": 0,
             "current_position": 50,
@@ -144,27 +138,6 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         # Inject our managed client into the device
         object.__setattr__(bluelink_device, "client", client)
         return bluelink_device
-
-    async def connect_and_get_status(self) -> dict[str, Any] | None:
-        """Connect to device and get current status."""
-        try:
-            async with self._managed_connection() as client:
-                const.LOGGER.debug("Connected to %s", self.device.address)
-
-                # Use the neosmartblue library to get status
-                bluelink_device = self._create_bluelink_device(client)
-
-                # Request status update
-                await bluelink_device.request_status_update()
-                status_data = await bluelink_device.receive_data(timeout=5.0)
-
-                if status_data and isinstance(status_data, dict):
-                    return status_data
-
-        except (OSError, TimeoutError, HomeAssistantError) as err:
-            const.LOGGER.error("Failed to connect to %s: %s", self.device.address, err)
-
-        return None
 
     async def send_move_command(self, position: int) -> None:
         """Send move command to the device."""
@@ -370,17 +343,19 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     async def refresh_advertisement_data(self) -> None:
         """Manually refresh data from the latest advertisement."""
+        # This method is kept for manual refresh if needed, but normal operation
+        # relies entirely on the handle_bluetooth_event callback for updates
         latest_data = self.get_latest_advertisement_data()
         if latest_data:
             const.LOGGER.debug(
-                "Refreshed advertisement data for %s: %s",
+                "Manually refreshed advertisement data for %s: %s",
                 self.device.address,
                 latest_data,
             )
             self.async_set_updated_data(latest_data)
         else:
             const.LOGGER.debug(
-                "No advertisement data available for %s",
+                "No advertisement data available for manual refresh for %s",
                 self.device.address,
             )
 
