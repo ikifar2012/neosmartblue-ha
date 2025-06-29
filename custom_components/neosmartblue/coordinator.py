@@ -265,8 +265,8 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         change: bluetooth.BluetoothChange,
     ) -> None:
         """Handle bluetooth events."""
-        const.LOGGER.debug(
-            "Bluetooth event received for %s: change=%s, name=%s",
+        const.LOGGER.info(
+            "Bluetooth event received for device %s: change=%s, name=%s",
             service_info.device.address,
             change,
             service_info.name,
@@ -280,15 +280,17 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             status_data = self._parse_advertisement_data(service_info)
             if status_data:
                 const.LOGGER.info(
-                    "Received advertisement data from %s: %s",
+                    "Successfully parsed advertisement data from %s: %s",
                     self.device.address,
                     status_data,
                 )
                 self.async_set_updated_data(status_data)
             else:
-                const.LOGGER.debug(
-                    "Advertisement from %s without valid status data",
+                const.LOGGER.info(
+                    "Advertisement from %s without valid status data "
+                    "(manufacturer_data: %s)",
                     self.device.address,
+                    service_info.manufacturer_data,
                 )
         else:
             const.LOGGER.debug(

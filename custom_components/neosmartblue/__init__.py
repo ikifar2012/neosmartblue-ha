@@ -56,7 +56,7 @@ async def async_setup_entry(
         hass,
         coordinator.handle_bluetooth_event,
         {"address": address},
-        bluetooth.BluetoothScanningMode.PASSIVE,
+        bluetooth.BluetoothScanningMode.ACTIVE,
     )
     entry.async_on_unload(callback_unregister)
 
