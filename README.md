@@ -108,7 +108,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Acknowledgments
 
-- **Core Library**: The `neosmartblue.py` Bluetooth communication library is original human-written code
+- **Core Library**: The `neosmartblue.py` Bluetooth communication library is written by [Matheson Steplock](https://github.com/ikifar2012)
+- **Neo Smart Blinds**: Thanks to Neo Smart for providing the API and documentation for their Bluetooth blinds
 - **Integration Framework**: Built on Home Assistant's excellent integration APIs
 - **AI Assistance**: Integration code generated with AI assistance for rapid prototyping
 
