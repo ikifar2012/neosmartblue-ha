@@ -1,4 +1,4 @@
-"""DataUpdateCoordinator for NeoSmart Blue Blinds."""
+"""DataUpdateCoordinator for Neo Smart Blinds Blue."""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
 class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     """
-    Class to manage fetching data from NeoSmart Blue blinds via BLE.
+    Class to manage fetching data from Neo Smart Blinds Blue via BLE.
 
     This coordinator operates in a purely passive mode:
     - No active polling or data fetching

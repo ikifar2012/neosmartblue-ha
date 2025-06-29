@@ -1,4 +1,4 @@
-"""Constants for NeoSmart Blue Blinds integration."""
+"""Constants for Neo Smart Blinds Blue integration."""
 
 from logging import Logger, getLogger
 

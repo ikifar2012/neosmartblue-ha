@@ -1,7 +1,7 @@
 """
-Custom integration to integrate NeoSmart Blue Blinds with Home Assistant.
+Custom integration to integrate Neo Smart Blinds Blue with Home Assistant.
 
-This integration provides Bluetooth Low Energy (BLE) support for NeoSmart Blue blinds.
+This integration provides Bluetooth Low Energy (BLE) support for Neo Smart Blinds Blue.
 """
 
 from __future__ import annotations
@@ -29,7 +29,7 @@ async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
 ) -> bool:
-    """Set up NeoSmart Blue blinds from a config entry."""
+    """Set up Neo Smart Blinds Blue from a config entry."""
     address: str = entry.data["address"]
 
     # Get the Bluetooth device

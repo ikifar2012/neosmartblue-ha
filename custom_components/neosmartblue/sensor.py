@@ -1,4 +1,4 @@
-"""Sensor platform for NeoSmart Blue Blinds."""
+"""Sensor platform for Neo Smart Blinds Blue."""
 
 from __future__ import annotations
 
