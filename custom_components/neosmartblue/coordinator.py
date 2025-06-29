@@ -11,6 +11,8 @@ from homeassistant.components import bluetooth
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from neosmartblue.py import parse_status_data
+from neosmartblue.py import BlueLinkDevice
 
 from . import const
 
@@ -159,7 +161,6 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     def _create_bluelink_device(self, client: BleakClient) -> Any:
         """Create a BlueLinkDevice with injected client."""
-        from neosmartblue.py import BlueLinkDevice
 
         bluelink_device = BlueLinkDevice(self.device.address)
         # Inject our managed client into the device
@@ -318,8 +319,6 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         try:
             # NeoSmart Blue devices use manufacturer ID 2407
             if const.NEOSMART_MANUFACTURER_ID in service_info.manufacturer_data:
-                from neosmartblue.py import parse_status_data
-
                 manufacturer_data = service_info.manufacturer_data[
                     const.NEOSMART_MANUFACTURER_ID
                 ]
