@@ -1,46 +1,119 @@
-# Notice
+# NeoSmart Blue Home Assistant Integration
 
-The component and platforms in this repository are not meant to be used by a
-user, but as a "blueprint" that custom component developers can build
-upon, to make more awesome stuff.
+A Home Assistant custom component for controlling NeoSmart Blue Bluetooth blinds.
 
-HAVE FUN! 😎
+## 🤖 AI-Generated Integration
 
-## Why?
+This Home Assistant integration was **generated using AI assistance** and is currently **in the process of being cleaned up and refined**. While the core functionality is working, some code may not follow best practices or may contain inefficiencies that are being addressed.
 
-This is simple, by having custom_components look (README + structure) the same
-it is easier for developers to help each other and for users to start using them.
+### What's Human-Written vs AI-Generated
 
-If you are a developer and you want to add things to this "blueprint" that you think more
-developers will have use for, please open a PR to add it :)
+- **`neosmartblue.py`** - The core Bluetooth communication library is **entirely human-written** by Matheson Steplock the project maintainer
+- **Home Assistant Integration Code** - The custom component files (`__init__.py`, `coordinator.py`, `config_flow.py`, etc.) were **AI-generated** and are being manually reviewed and improved
 
-## What?
+## 🚧 Current Status
 
-This repository contains multiple files, here is a overview:
+This integration is functional but under active development:
 
-File | Purpose | Documentation
--- | -- | --
-`.devcontainer.json` | Used for development/testing with Visual Studio Code. | [Documentation](https://code.visualstudio.com/docs/remote/containers)
-`.github/ISSUE_TEMPLATE/*.yml` | Templates for the issue tracker | [Documentation](https://help.github.com/en/github/building-a-strong-community/configuring-issue-templates-for-your-repository)
-`custom_components/integration_blueprint/*` | Integration files, this is where everything happens. | [Documentation](https://developers.home-assistant.io/docs/creating_component_index)
-`CONTRIBUTING.md` | Guidelines on how to contribute. | [Documentation](https://help.github.com/en/github/building-a-strong-community/setting-guidelines-for-repository-contributors)
-`LICENSE` | The license file for the project. | [Documentation](https://help.github.com/en/github/creating-cloning-and-archiving-repositories/licensing-a-repository)
-`README.md` | The file you are reading now, should contain info about the integration, installation and configuration instructions. | [Documentation](https://help.github.com/en/github/writing-on-github/basic-writing-and-formatting-syntax)
-`requirements.txt` | Python packages used for development/lint/testing this integration. | [Documentation](https://pip.pypa.io/en/stable/user_guide/#requirements-files)
+- ✅ **Working**: Device discovery, status monitoring, position control
+- 🔄 **In Progress**: Code cleanup, error handling improvements, optimization
+- 📋 **Planned**: Better documentation,
 
-## How?
+## Features
 
-1. Create a new repository in GitHub, using this repository as a template by clicking the "Use this template" button in the GitHub UI.
-1. Open your new repository in Visual Studio Code devcontainer (Preferably with the "`Dev Containers: Clone Repository in Named Container Volume...`" option).
-1. Rename all instances of the `integration_blueprint` to `custom_components/<your_integration_domain>` (e.g. `custom_components/awesome_integration`).
-1. Rename all instances of the `Integration Blueprint` to `<Your Integration Name>` (e.g. `Awesome Integration`).
-1. Run the `scripts/develop` to start HA and test out your new integration.
+- **Passive Monitoring**: Uses Bluetooth advertisements for status updates (no active polling)
+- **Position Control**: Set blind position from 0-100%
+- **Stop Command**: Emergency stop functionality
+- **Battery Monitoring**: Track device battery levels
+- **Connection Management**: Intelligent connection handling with proper cleanup
 
-## Next steps
+## Installation
 
-These are some next steps you may want to look into:
-- Add tests to your integration, [`pytest-homeassistant-custom-component`](https://github.com/MatthewFlamm/pytest-homeassistant-custom-component) can help you get started.
-- Add brand images (logo/icon) to https://github.com/home-assistant/brands.
-- Create your first release.
-- Share your integration on the [Home Assistant Forum](https://community.home-assistant.io/).
-- Submit your integration to [HACS](https://hacs.xyz/docs/publish/start).
+### HACS (Recommended)
+
+1. Add this repository to HACS as a custom repository
+2. Install "NeoSmart Blue" from HACS
+3. Restart Home Assistant
+4. Go to Settings → Devices & Services → Add Integration
+5. Search for "NeoSmart Blue" and follow the setup
+
+### Manual Installation
+
+1. Copy the `custom_components/neosmartblue` folder to your Home Assistant `custom_components` directory
+2. Restart Home Assistant
+3. Add the integration through the UI
+
+## Configuration
+
+The integration uses Home Assistant's UI-based configuration flow:
+
+1. Navigate to **Settings** → **Devices & Services**
+2. Click **Add Integration**
+3. Search for **"NeoSmart Blue"**
+4. Select your device from the discovered Bluetooth devices
+5. Complete the setup process
+
+## Device Requirements
+
+- NeoSmart Blue Bluetooth blinds
+- Home Assistant with Bluetooth support
+- Device must be in pairing/discoverable mode during setup
+
+## Supported Entities
+
+### Cover Entity
+- **Position Control**: Set blind position (0-100%)
+- **Open/Close**: Standard cover controls
+- **Stop**: Emergency stop functionality
+
+### Binary Sensors
+- **Charging Status**: Indicates if device is charging
+- **Motor Running**: Shows if motor is currently active
+
+### Sensors
+- **Battery Level**: Current battery percentage
+- **Signal Strength (RSSI)**: Bluetooth signal quality
+- **Current Position**: Real-time position feedback
+
+## Technical Details
+
+### Communication Protocol
+- **Passive Monitoring**: Uses Bluetooth Low Energy advertisements for status updates
+- **Command Mode**: Establishes temporary connections only when sending commands
+- **No Polling**: Efficient design that doesn't drain device battery
+
+### Architecture
+- **Coordinator Pattern**: Centralized data management with Home Assistant's DataUpdateCoordinator
+- **Event-Driven**: Updates triggered by Bluetooth advertisement events
+- **Connection Pooling**: Managed connections with proper cleanup and error handling
+
+## Contributing
+
+Since this is an AI-generated integration being cleaned up, contributions are welcome:
+
+1. **Code Review**: Help identify areas for improvement
+2. **Testing**: Test with different device configurations
+3. **Documentation**: Improve documentation and examples
+4. **Bug Reports**: Report issues with detailed logs
+
+
+## Known Issues
+
+- Some error handling may be overly broad (AI-generated )
+- Code structure may not follow all Home Assistant best practices
+- Documentation is still being refined
+
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- **Core Library**: The `neosmartblue.py` Bluetooth communication library is original human-written code
+- **Integration Framework**: Built on Home Assistant's excellent integration APIs
+- **AI Assistance**: Integration code generated with AI assistance for rapid prototyping
+
+---
+
+**Note**: This integration is actively being improved. While functional, expect regular updates as the code is refined and optimized. Feedback and contributions are appreciated!
