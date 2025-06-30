@@ -11,8 +11,8 @@ from homeassistant.components import bluetooth
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
-from neosmartblue.py import parse_status_data
-from neosmartblue.py import BlueLinkDevice
+
+from neosmartblue.py import BlueLinkDevice, parse_status_data
 
 from . import const
 
@@ -161,7 +161,6 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     def _create_bluelink_device(self, client: BleakClient) -> Any:
         """Create a BlueLinkDevice with injected client."""
-
         bluelink_device = BlueLinkDevice(self.device.address)
         # Inject our managed client into the device
         object.__setattr__(bluelink_device, "client", client)
