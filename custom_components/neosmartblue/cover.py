@@ -39,7 +39,7 @@ async def async_setup_entry(
 class NeoSmartBlueCover(NeoSmartBlueEntity, CoverEntity):
     """NeoSmart Blue blind cover entity."""
 
-    _attr_device_class = CoverDeviceClass.BLIND
+    _attr_device_class = CoverDeviceClass.SHADE
     _attr_supported_features = (
         CoverEntityFeature.OPEN
         | CoverEntityFeature.CLOSE
