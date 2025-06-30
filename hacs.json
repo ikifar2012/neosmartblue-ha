@@ -1,5 +1,8 @@
 {
     "name": "Neo Smart Blinds Blue",
+    "filename": "neosmartblue.zip",
     "homeassistant": "2025.6.0",
-    "hacs": "2.0.5"
+    "hacs": "2.0.5",
+    "render_readme": true,
+    "zip_release": true
 }
