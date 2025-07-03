@@ -1,118 +1,93 @@
-# Neo Smart Blinds Blue Home Assistant Integration
+# Neo Smart Blinds Blue HA Integration
 
-A Home Assistant custom component for controlling Neo Smart Bluetooth blinds.
+[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/custom-components/hacs)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2025.6+-blue.svg)](https://www.home-assistant.io)
+[![Bluetooth](https://img.shields.io/badge/Bluetooth-BLE-informational.svg)](https://esphome.io/components/bluetooth_proxy.html)
 
-## 🤖 AI-Generated Integration
+> 🤖 **AI-Generated Integration** - Currently being refined and optimized
 
-This Home Assistant integration was **generated using AI assistance** and is currently **in the process of being cleaned up and refined**. While the core functionality is working, some code may not follow best practices or may contain inefficiencies that are being addressed.
+Control your Neo Smart Bluetooth blinds through Home Assistant with passive monitoring and efficient battery usage.
 
-### What's Human-Written vs AI-Generated
+## ✨ Features
 
-- **`neosmartblue.py`** - The core Bluetooth communication library is written by [Matheson Steplock](https://github.com/ikifar2012) the project maintainer
-- **Home Assistant Integration Code** - The custom component files (`__init__.py`, `coordinator.py`, `config_flow.py`, etc.) were **AI-generated** and are being manually reviewed and improved
+- 🔋 **Passive Monitoring** - No battery drain on your blinds
+- 🎯 **Position Control** - Precise 0-100% positioning
+- ⛔ **Emergency Stop** - Instant stop functionality
+- 📊 **Real-time Status** - Battery, position, and signal strength
+- 🔗 **Smart Connections** - Connects only when needed
 
-## 🚧 Current Status
+## 🚀 Quick Start
 
-This integration is functional but under active development:
+### HACS Installation (Recommended)
 
-- ✅ **Working**: Device discovery, status monitoring, position control
-- 🔄 **In Progress**: Code cleanup, error handling improvements, optimization
-- 📋 **Planned**: Better documentation,
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=ikifar2012&repository=neosmartblue-ha&category=integration)
 
-## Features
-
-- **Passive Monitoring**: Uses Bluetooth advertisements for status updates (no active polling)
-- **Position Control**: Set blind position from 0-100%
-- **Stop Command**: Emergency stop functionality
-- **Battery Monitoring**: Track device battery levels
-- **Connection Management**: Intelligent connection handling with proper cleanup
-
-## Installation
-
-### HACS (Recommended)
-
-1. Add this repository to HACS as a custom repository
-2. Install "Neo Smart Blinds Blue" from HACS
-3. Restart Home Assistant
-4. Go to Settings → Devices & Services → Add Integration
-5. Search for "Neo Smart Blinds Blue" and follow the setup
+1. **Add Custom Repository**:
+   ```
+   https://github.com/ikifar2012/neosmartblue-ha
+   ```
+2. **Category**: Integration
+3. **Install** "Neo Smart Blinds Blue"
+4. **Restart** Home Assistant
+5. **Add** integration via Settings → Devices & Services
 
 ### Manual Installation
 
-1. Copy the `custom_components/neosmartblue` folder to your Home Assistant `custom_components` directory
-2. Restart Home Assistant
-3. Add the integration through the UI
+```bash
+# Copy to your custom_components directory
+cp -r custom_components/neosmartblue /config/custom_components/
+```
 
-## Configuration
+## 📱 Supported Entities
 
-The integration uses Home Assistant's UI-based configuration flow:
+| Entity Type | Features |
+|-------------|----------|
+| **Cover** | Position control, Open/Close, Stop |
+| **Sensors** | Battery, RSSI, Position |
+| **Binary Sensors** | Charging status, Motor running |
 
-1. Navigate to **Settings** → **Devices & Services**
-2. Click **Add Integration**
-3. Search for **"Neo Smart Blinds Blue"**
+## 🔧 Requirements
 
-## Device Requirements
+- Neo Smart Blinds Blue (Bluetooth)
+- Home Assistant 2023.1+
+- Bluetooth adapter
 
-- Neo Smart Blinds Blue Bluetooth blinds
-- Home Assistant with Bluetooth support
-- Device must be in pairing/discoverable mode during setup
+## 🚧 Development Status
 
-## Supported Entities
+| Component | Status |
+|-----------|--------|
+| Device Discovery | ✅ Working |
+| Position Control | ✅ Working |
+| Battery Monitoring | ✅ Working |
+| Code Cleanup | 🔄 In Progress |
+| Documentation | 🔄 In Progress |
 
-### Cover Entity
-- **Position Control**: Set blind position (0-100%)
-- **Open/Close**: Standard cover controls
-- **Stop**: Emergency stop functionality
+## 🤝 Contributing
 
-### Binary Sensors
-- **Charging Status**: Indicates if device is charging
-- **Motor Running**: Shows if motor is currently active
+[![GitHub Issues](https://img.shields.io/github/issues/ikifar2012/neosmartblue-ha)](https://github.com/ikifar2012/neosmartblue-ha/issues)
+[![GitHub Pull Requests](https://img.shields.io/github/issues-pr/ikifar2012/neosmartblue-ha)](https://github.com/ikifar2012/neosmartblue-ha/pulls)
 
-### Sensors
-- **Battery Level**: Current battery percentage
-- **Signal Strength (RSSI)**: Bluetooth signal quality
-- **Current Position**: Real-time position feedback
+Help improve this integration:
+- 🐛 Report bugs
+- 📝 Improve documentation
+- 🧪 Test with your devices
+- 💻 Code review
 
-## Technical Details
+## 📄 License
 
-### Communication Protocol
-- **Passive Monitoring**: Uses Bluetooth Low Energy advertisements for status updates
-- **Command Mode**: Establishes temporary connections only when sending commands
-- **No Polling**: Efficient design that doesn't drain device battery
+MIT License - see [LICENSE](LICENSE) for details.
 
-### Architecture
-- **Coordinator Pattern**: Centralized data management with Home Assistant's DataUpdateCoordinator
-- **Event-Driven**: Updates triggered by Bluetooth advertisement events
-- **Connection Pooling**: Managed connections with proper cleanup and error handling
+## 🙏 Credits
 
-## Contributing
-
-Since this is an AI-generated integration being cleaned up, contributions are welcome:
-
-1. **Code Review**: Help identify areas for improvement
-2. **Testing**: Test with different device configurations
-3. **Documentation**: Improve documentation and examples
-4. **Bug Reports**: Report issues with detailed logs
-
-
-## Known Issues
-
-- Some error handling may be overly broad (AI-generated )
-- Code structure may not follow all Home Assistant best practices
-- Documentation is still being refined
-
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-- **Core Library**: The `neosmartblue.py` Bluetooth communication library is written by [Matheson Steplock](https://github.com/ikifar2012)
-- **Neo Smart Blinds**: Thanks to Neo Smart for providing the API and documentation for their Bluetooth blinds
-- **Integration Framework**: Built on Home Assistant's excellent integration APIs
-- **AI Assistance**: Integration code generated with AI assistance for rapid prototyping
+- **Core Library**: [Matheson Steplock](https://github.com/ikifar2012)
+- **Neo Smart Blinds**: API documentation
+- **AI Assistance**: Integration code generation
 
 ---
 
-**Note**: This integration is actively being improved. While functional, expect regular updates as the code is refined and optimized. Feedback and contributions are appreciated!
+<p align="center">
+  <a href="https://github.com/ikifar2012/neosmartblue-ha/issues">Report Bug</a> •
+  <a href="https://github.com/ikifar2012/neosmartblue-ha/issues">Request Feature</a> •
+  <a href="#contributing">Contribute</a>
+</p>
