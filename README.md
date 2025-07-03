@@ -34,10 +34,10 @@ Control your Neo Smart Bluetooth blinds through Home Assistant with passive moni
 
 ### Manual Installation
 
-```bash
-# Copy to your custom_components directory
-cp -r custom_components/neosmartblue/config/custom_components/
-```
+   ```bash
+   # Copy to your custom_components directory
+   cp -r custom_components/neosmartblue/config/custom_components/
+   ```
 
 ## 📱 Supported Entities
 
