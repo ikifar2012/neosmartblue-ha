@@ -209,7 +209,7 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 await bluelink_device.move_to_position(position)
                 const.LOGGER.info("Sent move command to position %d", position)
         except (OSError, TimeoutError, HomeAssistantError, BleakError) as err:
-            const.LOGGER.exception(
+            const.LOGGER.error(
                 "Failed to send move command to %s: %s",
                 self.device.address,
                 err,
@@ -253,7 +253,7 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 await bluelink_device.stop()
                 const.LOGGER.info("Sent stop command")
         except (OSError, TimeoutError, HomeAssistantError, BleakError) as err:
-            const.LOGGER.exception(
+            const.LOGGER.error(
                 "Failed to send stop command to %s: %s",
                 self.device.address,
                 err,
