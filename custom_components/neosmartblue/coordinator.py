@@ -149,7 +149,8 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "current_position": 50,
             "target_position": 50,
             "limit_range_size": 0,
-            "rssi": self.device.rssi or -60,
+            # BLEDevice may not expose rssi attribute in newer HA/Bleak versions; fetch if present
+            "rssi": (getattr(self.device, "rssi", None) or -60),
             "motor_running": False,
             "motor_direction_down": False,
             "up_limit_set": False,
@@ -338,7 +339,12 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     )
 
                     # Add RSSI information
-                    parsed_status["rssi"] = service_info.device.rssi or -60
+                    # Use rssi from service_info (preferred) falling back to device attribute if available
+                    parsed_status["rssi"] = (
+                        service_info.rssi
+                        if getattr(service_info, "rssi", None) is not None
+                        else getattr(service_info.device, "rssi", -60) or -60
+                    )
 
                     const.LOGGER.info(
                         "Successfully parsed status data from %s: %s",
