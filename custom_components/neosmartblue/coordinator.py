@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Any
 
 from bleak import BleakClient
+from bleak.exc import BleakError
 from homeassistant.components import bluetooth
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
@@ -117,7 +118,7 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     self.device.address,
                 )
                 yield client
-            except Exception as err:
+            except (OSError, TimeoutError, HomeAssistantError, BleakError) as err:
                 const.LOGGER.error(
                     "Failed to connect to %s: %s",
                     self.device.address,
@@ -132,7 +133,7 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                             "Disconnected from %s",
                             self.device.address,
                         )
-                except (OSError, TimeoutError, HomeAssistantError, Exception) as err:
+                except (OSError, TimeoutError, HomeAssistantError, BleakError) as err:
                     const.LOGGER.warning(
                         "Error during disconnect from %s: %s",
                         self.device.address,
@@ -148,7 +149,9 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "current_position": 50,
             "target_position": 50,
             "limit_range_size": 0,
-            "rssi": self.device.rssi or -60,
+            # BLEDevice may not expose an rssi attribute in newer
+            # HA/Bleak versions; fetch it if present
+            "rssi": (getattr(self.device, "rssi", None) or -60),
             "motor_running": False,
             "motor_direction_down": False,
             "up_limit_set": False,
@@ -207,8 +210,8 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
                 await bluelink_device.move_to_position(position)
                 const.LOGGER.info("Sent move command to position %d", position)
-        except (OSError, TimeoutError, HomeAssistantError, Exception) as err:
-            const.LOGGER.exception(
+        except (OSError, TimeoutError, HomeAssistantError, BleakError) as err:
+            const.LOGGER.error(
                 "Failed to send move command to %s: %s",
                 self.device.address,
                 err,
@@ -251,8 +254,8 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
                 await bluelink_device.stop()
                 const.LOGGER.info("Sent stop command")
-        except (OSError, TimeoutError, HomeAssistantError, Exception) as err:
-            const.LOGGER.exception(
+        except (OSError, TimeoutError, HomeAssistantError, BleakError) as err:
+            const.LOGGER.error(
                 "Failed to send stop command to %s: %s",
                 self.device.address,
                 err,
@@ -337,7 +340,13 @@ class NeoSmartBlueCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     )
 
                     # Add RSSI information
-                    parsed_status["rssi"] = service_info.device.rssi or -60
+                    # Prefer service_info.rssi; fall back to device
+                    # attribute if service_info does not provide one
+                    parsed_status["rssi"] = (
+                        service_info.rssi
+                        if getattr(service_info, "rssi", None) is not None
+                        else getattr(service_info.device, "rssi", -60) or -60
+                    )
 
                     const.LOGGER.info(
                         "Successfully parsed status data from %s: %s",
